@@ -8,7 +8,9 @@ from pyquery import PyQuery as pq
 from config import *
 from urllib.parse import quote
 
-browser = webdriver.Chrome()
+# browser = webdriver.Chrome()
+browser = webdriver.PhantomJS(service_args=SERVICE_ARGS)
+
 wait = WebDriverWait(browser, 10)
 client = pymongo.MongoClient(MONGO_URL)
 db = client[MONGO_DB]
@@ -25,14 +27,15 @@ def index_page(page):
         browser.get(url)
         if page > 1:
             input = wait.until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="mainsrp-pager"]/div/div/div/div[2]/input')))
+                EC.presence_of_element_located((By.CSS_SELECTOR, '#mainsrp-pager div.form > input')))
             submit = wait.until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="mainsrp-pager"]/div/div/div/div[2]/span[3]')))
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '#mainsrp-pager div.form > span.btn.J_Submit')))
             input.clear()
             input.send_keys(page)
             submit.click()
-        wait.until(EC.text_to_be_present_in_element(
-            (By.CSS_SELECTOR, '#mainsrp-pager > div > div > div > ul > li.item.active > span'), str(page_number)))
+        wait.until(
+            EC.text_to_be_present_in_element((By.CSS_SELECTOR, '#mainsrp-pager li.item.active > span'), str(page)))
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.m-itemlist .items .item')))
         get_products()
     except TimeoutException:
         index_page(page)
@@ -47,7 +50,7 @@ def get_products():
     items = doc('#mainsrp-itemlist .items .item').items()
     for item in items:
         product = {
-            'image': item.find('.pic .img').attr('src'),
+            'image': item.find('.pic .img').attr('data-src'),
             'price': item.find('.price').text(),
             'deal': item.find('.deal-cnt').text(),
             'title': item.find('.title').text(),
@@ -64,13 +67,16 @@ def save_to_mongo(result):
     :param result: 结果
     """
     try:
-        if db[MONGO_TABLE].insert(result):
-            print('存储到MongoDB成功', result)
+        if db[MONGO_COLLECTION].insert(result):
+            print('存储到MongoDB成功')
     except Exception:
-        print('存储到MongoDB失败', result)
+        print('存储到MongoDB失败')
 
 
 def main():
+    """
+    遍历每一页
+    """
     for i in range(1, MAX_PAGE + 1):
         index_page(i)
     browser.close()
