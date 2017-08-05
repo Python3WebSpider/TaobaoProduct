@@ -8,14 +8,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from pyquery import PyQuery as pq
 from config import *
 
-browser = webdriver.Chrome(service_args=SERVICE_ARGS)
+browser = webdriver.Chrome()
 
 wait = WebDriverWait(browser, 10)
 
 client = pymongo.MongoClient(MONGO_URL)
 db = client[MONGO_DB]
-
-browser.set_window_size(1400, 900)
 
 
 def search():
@@ -59,7 +57,7 @@ def get_products():
         product = {
             'image': item.find('.pic .img').attr('src'),
             'price': item.find('.price').text(),
-            'deal': item.find('.deal-cnt').text()[:-3],
+            'deal': item.find('.deal-cnt').text(),
             'title': item.find('.title').text(),
             'shop': item.find('.shop').text(),
             'location': item.find('.location').text()
