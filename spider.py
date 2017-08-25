@@ -9,7 +9,11 @@ from config import *
 from urllib.parse import quote
 
 # browser = webdriver.Chrome()
-browser = webdriver.PhantomJS(service_args=SERVICE_ARGS)
+# browser = webdriver.PhantomJS(service_args=SERVICE_ARGS)
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+browser = webdriver.Chrome(chrome_options=chrome_options)
 
 wait = WebDriverWait(browser, 10)
 client = pymongo.MongoClient(MONGO_URL)
